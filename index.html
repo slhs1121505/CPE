@@ -127,14 +127,20 @@
     }
 
     async function loadAll(){
-      const baseURL = 'https://raw.githubusercontent.com/slhs1121505/CPE/main/data/';
       const promises = DATES.map(d =>
-        fetch(baseURL + d + '.json')
+        fetch('data/' + d + '.json')
           .then(r => r.ok 
               ? r.json().then(data => ({date: d, data: data})) 
               : Promise.reject(d)
           )
       );
+    
+      const settled = await Promise.allSettled(promises);
+      const loaded = settled.filter(s => s.status === 'fulfilled').map(s => s.value);
+      const failed = settled.filter(s => s.status === 'rejected').map(s => s.reason);
+      return {loaded, failed};
+    }
+
 
   const settled = await Promise.allSettled(promises);
   const loaded = settled.filter(s => s.status === 'fulfilled').map(s => s.value);
