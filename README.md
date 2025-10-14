@@ -1,4 +1,4 @@
-# [CPE 查榜小工具](https://tzufu.me/CPE) 
+## [CPE 查榜小工具](https://tzufu.me/CPE) 
 
 CPE 查榜小工具 
 使用者可輸入姓名查詢 CPE 排名、題數、用時及排名比例，並可依學校或單位篩選結果。  
