@@ -1,187 +1,136 @@
 <!doctype html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>CPE 查榜小工具</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <style>
-    :root{
-      --bg:#ffffff;
-      --card:#e0e0e0; 
-      --panel:#d6d6d6;
-      --fg:#222222;
-      --muted:#666666;
-      --line:#bbbbbb;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0;padding:0;font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,'Noto Sans TC',sans-serif;background:var(--bg);color:var(--fg);}
-    body{display:flex;justify-content:center;align-items:flex-start;padding:24px}
-
-    .container{width:100%;max-width:980px;max-height:95vh;overflow:auto}
-    .card{background:linear-gradient(180deg,var(--card),var(--panel));border-radius:12px;padding:28px;box-shadow:0 12px 36px rgba(0,0,0,0.05)}
-
-    .header{display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap}
-    .title h1{margin:0;font-size:28px;font-weight:700;color:#000000}
-    .count{margin-left:auto;color:var(--muted)}
-
-    .form{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;margin-top:16px}
-    .field{display:flex;flex-direction:column}
-    label{font-size:12px;color:var(--muted);margin-bottom:6px}
-    input[type=text]{background:#fff;border:1px solid var(--line);padding:10px 6px;font-size:15px;min-width:200px;color:var(--fg);border-radius:6px}
-    input[type=text]:focus{outline:none;border-color:#bbb;box-shadow:0 0 6px rgba(0,0,0,0.05)}
-
-    .controls-right{margin-left:auto;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
-    .btn{padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:#fff;cursor:pointer;font-weight:700;transition:0.2s}
-    .btn:hover{background:#f2f2f2}
-    .btn.primary{background:#fff;color:var(--fg);border:1px solid var(--line)}
-
-    .status{margin-top:12px;color:var(--muted);font-size:13px}
-
-    .results{margin-top:18px}
-    table{width:100%;border-collapse:collapse;font-size:14px}
-    thead th{padding:12px 8px;text-align:left;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line)}
-    tbody td{padding:10px 8px;border-bottom:1px dashed var(--line)}
-    .empty{padding:28px;border-radius:10px;background:transparent;color:var(--muted);text-align:center}
-
-    footer{margin-top:18px;display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:13px}
-    footer a{color:var(--muted);text-decoration:none}
-
-    @media (max-width:720px){.form{flex-direction:column;align-items:stretch}.controls-right{align-items:stretch;margin-left:0}}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CPE 查榜小工具</title>
+<style>
+  body{font-family:Inter,sans-serif;background:#f9f9f9;margin:0;padding:24px;display:flex;justify-content:center}
+  .container{max-width:980px;width:100%}
+  .card{background:#fff;border-radius:12px;padding:28px;box-shadow:0 12px 36px rgba(0,0,0,0.05)}
+  h1{margin:0 0 18px 0}
+  .form{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:16px;align-items:flex-end}
+  .field{display:flex;flex-direction:column}
+  label{font-size:12px;color:#666;margin-bottom:6px}
+  input[type=text]{padding:8px;border:1px solid #bbb;border-radius:6px;min-width:150px}
+  .btn{padding:10px 14px;border-radius:10px;border:1px solid #bbb;background:#fff;cursor:pointer;font-weight:700;align-self:flex-end}
+  .results table{width:100%;border-collapse:collapse;font-size:14px;margin-top:16px}
+  .results th, .results td{padding:10px 8px;text-align:left;border-bottom:1px solid #ccc}
+  .empty{text-align:center;color:#666;padding:28px;background:#f5f5f5;border-radius:10px}
+</style>
 </head>
 <body>
-  <div class="container">
-    <div class="card">
-      <div class="header">
-        <div class="title">
-          <h1>CPE 查榜小工具</h1>
-        </div>
-        <div class="count"><span id="dateCount"></span> 個已收錄日期</div>
+<div class="container">
+  <div class="card">
+    <h1>CPE 查榜小工具</h1>
+    <div class="form">
+      <div class="field">
+        <label for="school">學校 / 單位（選填）</label>
+        <input id="school" type="text" placeholder="例如：臺大資工">
       </div>
-
-      <div class="form">
-        <div class="field">
-          <label for="school">學校 / 單位（選填）</label>
-          <input id="school" type="text" placeholder="例如：臺大資工">
-        </div>
-        <div class="field">
-          <label for="name">姓名（必填，2~9 字）</label>
-          <input id="name" type="text" placeholder="例如：王小明">
-        </div>
-        <div class="controls-right">
-          <button id="search" class="btn primary">查詢</button>
-        </div>
+      <div class="field">
+        <label for="name">姓名（必填，2~9 字）</label>
+        <input id="name" type="text" placeholder="例如：王小明">
       </div>
-
-      <div class="status" id="status">請輸入姓名並按查詢</div>
-      <div class="results" id="results"><div class="empty">尚無查詢結果</div></div>
-
-      <footer>
-        <div>資料範圍 <strong>2013-10-01到2025-09-30</strong></div>
-        <div>製作：<a href="https://github.com/slhs1121505" target="_blank" rel="noopener">張子夫</a></div>
-      </footer>
+      <button id="search" class="btn">查詢</button>
     </div>
+    <div id="status">請輸入姓名並按查詢</div>
+    <div class="results" id="results"><div class="empty">尚無查詢結果</div></div>
   </div>
+</div>
 
-  <script>
-    const DATES = [
-      "2013-10-01","2013-12-17","2014-03-25","2014-05-27","2014-09-23","2014-12-23",
-      "2015-03-24","2015-05-26","2015-10-06","2015-12-22","2016-03-22","2016-05-24",
-      "2016-10-04","2016-12-20","2017-03-28","2017-05-23","2017-09-26","2017-12-19",
-      "2018-03-27","2018-05-29","2018-10-02","2018-12-18","2019-03-26","2019-05-28",
-      "2019-09-24","2019-12-17","2020-05-26","2020-06-09","2020-10-20","2020-12-22",
-      "2021-03-23","2021-10-19","2021-12-21","2022-03-22","2022-05-24","2022-10-18",
-      "2022-12-13","2023-03-21","2023-05-23","2023-10-17","2023-12-12","2024-04-23",
-      "2024-05-21","2024-10-15","2024-12-10","2025-03-25","2025-05-20","2025-09-30"
-    ];
+<script>
+const DATES = [
+  "2013-10-01","2013-12-17","2014-03-25","2014-05-27","2014-09-23","2014-12-23",
+  "2015-03-24","2015-05-26","2015-10-06","2015-12-22","2016-03-22","2016-05-24",
+  "2016-10-04","2016-12-20","2017-03-28","2017-05-23","2017-09-26","2017-12-19",
+  "2018-03-27","2018-05-29","2018-10-02","2018-12-18","2019-03-26","2019-05-28",
+  "2019-09-24","2019-12-17","2020-05-26","2020-06-09","2020-10-20","2020-12-22",
+  "2021-03-23","2021-10-19","2021-12-21","2022-03-22","2022-05-24","2022-10-18",
+  "2022-12-13","2023-03-21","2023-05-23","2023-10-17","2023-12-12","2024-04-23",
+  "2024-05-21","2024-10-15","2024-12-10","2025-03-25","2025-05-20","2025-09-30"
+];
 
-    document.getElementById('dateCount').textContent = DATES.length;
-    const statusEl = document.getElementById('status');
-    const resultsEl = document.getElementById('results');
+const statusEl = document.getElementById('status');
+const resultsEl = document.getElementById('results');
 
-    function anonymizeName(nameRaw){
-      if(!nameRaw) return '';
-      const name = [...nameRaw];
-      const len = name.length;
-      if(len === 2) return name[0] + 'Ｏ';
-      if(len === 3) return name[0] + 'Ｏ' + name[2];
-      if(len === 4) return name[0] + 'Ｏ' + name.slice(2).join('');
-      if(len >= 5){
-        const mid = Math.floor(len / 2);
-        name[mid] = 'Ｏ';
-        return name.join('');
+function anonymizeName(nameRaw){
+  if(!nameRaw) return '';
+  const name = [...nameRaw];
+  const len = name.length;
+  if(len === 2) return name[0] + 'Ｏ';
+  if(len === 3) return name[0] + 'Ｏ' + name[2];
+  if(len === 4) return name[0] + 'Ｏ' + name.slice(2).join('');
+  if(len >= 5){ const mid=Math.floor(len/2); name[mid]='Ｏ'; return name.join('');}
+  return nameRaw;
+}
+
+function validateName(n){ const l=n.trim().length; return l>1 && l<10; }
+
+async function loadAll(){
+  const promises = DATES.map(d=>fetch(`https://raw.githubusercontent.com/slhs1121505/CPE/main/data/${d}.json`).then(r=>r.ok?r.json().then(data=>({date:d,data:data})):Promise.reject(d)));
+  const settled = await Promise.allSettled(promises);
+  const loaded = settled.filter(s=>s.status==='fulfilled').map(s=>s.value);
+  const failed = settled.filter(s=>s.status==='rejected').map(s=>s.reason);
+  return {loaded,failed};
+}
+
+function render(matches){
+  if(matches.length===0){resultsEl.innerHTML='<div class="empty">查無結果</div>'; return;}
+  let html='<table><thead><tr><th>日期</th><th>排名</th><th>學校/單位</th><th>姓名</th><th>題數</th><th>分鐘</th><th>排名比例</th></tr></thead><tbody>';
+  for(const r of matches){
+    html+=`<tr>
+      <td>${r.date||''}</td>
+      <td>${r.rank||r['排名']||''}</td>
+      <td>${r.school||r['學校']||''}</td>
+      <td>${r.displayName||r.name||r['姓名']||''}</td>
+      <td>${r.solved!==undefined?r.solved:r['題數']||0}</td>
+      <td>${r.minutes!==undefined?r.minutes:r['分鐘']||0}</td>
+      <td>${r.rankPercent||r['趴數']||''}</td>
+    </tr>`;
+  }
+  html+='</tbody></table>';
+  html+=`<div style="margin-top:10px;color:#666;font-size:13px">顯示 ${matches.length} 筆結果（日期由近到遠）</div>`;
+  resultsEl.innerHTML=html;
+}
+
+document.getElementById('search').addEventListener('click',async function(){
+  resultsEl.innerHTML=''; statusEl.textContent='';
+  const school=document.getElementById('school').value.trim().toLowerCase();
+  const nameInput=document.getElementById('name').value.trim();
+  if(!validateName(nameInput)){statusEl.innerHTML='<span style="color:#b00">姓名長度不符：請輸入 2~9 字</span>'; return;}
+  const anonName=anonymizeName(nameInput);
+  statusEl.textContent='載入資料...';
+  const data=await loadAll(); const loaded=data.loaded; const failed=data.failed;
+  statusEl.textContent=failed.length>0?`完成載入（部分檔案找不到：${failed.length}）`:`完成載入（共 ${loaded.length} 個檔案）`;
+
+  const matches=[];
+  for(const entry of loaded){
+    const date=entry.date;
+    const arr=Array.isArray(entry.data)?entry.data:[];
+    for(const row of arr){
+      const rowName=row.name||row['姓名']||'';
+      const rowSchool=(row.school||row['學校']||row.unit||row['單位']||'').toLowerCase();
+      if(rowName===anonName && (school===''||rowSchool.indexOf(school)!==-1)){
+        matches.push({
+          ...row,
+          date: date,
+          displayName: rowName,
+          rankPercent: row['趴數']||''
+        });
       }
-      return nameRaw;
     }
+  }
 
-    function validateName(n){
-      const l = n.trim().length;
-      return l>1 && l<10;
-    }
+  matches.sort((a,b)=>{
+    const da=new Date(a.date).getTime(), db=new Date(b.date).getTime();
+    if(db!==da) return db-da;
+    const ra=Number(a.rank||a['排名']||Infinity), rb=Number(b.rank||b['排名']||Infinity);
+    return ra-rb;
+  });
 
-    async function loadAll(){
-      const promises = DATES.map(d => 
-        fetch('https://raw.githubusercontent.com/slhs1121505/CPE/main/data/' + d + '.json')
-          .then(r => r.ok ? r.json().then(data => ({date:d,data:data})) : Promise.reject(d))
-      );
-      const settled = await Promise.allSettled(promises);
-      const loaded = settled.filter(s=>s.status==='fulfilled').map(s=>s.value);
-      const failed = settled.filter(s=>s.status==='rejected').map(s=>s.reason);
-      return {loaded, failed};
-    }
-
-    function render(matches){
-      if(matches.length===0){resultsEl.innerHTML='<div class="empty">查無結果</div>'; return;}
-      let html='<table><thead><tr><th>日期</th><th>排名</th><th>學校/單位</th><th>姓名</th><th>題數</th><th>分鐘</th><th>排名比例</th></tr></thead><tbody>';
-      for(const r of matches){
-        html+=`<tr>
-          <td>${r.date||''}</td>
-          <td>${r.rank||r['排名']||''}</td>
-          <td>${r.school||r['學校']||''}</td>
-          <td>${r.displayName||r.name||r['姓名']||''}</td>
-          <td>${r.solved||r['題數']||''}</td>
-          <td>${r.minutes||r['分鐘']||''}</td>
-          <td>${r['趴數']||''}</td>
-        </tr>`;
-      }
-      html+='</tbody></table>';
-      html+=`<div style="margin-top:10px;color:var(--muted);font-size:13px">顯示 ${matches.length} 筆結果（日期由近到遠）</div>`;
-      resultsEl.innerHTML=html;
-    }
-
-    document.getElementById('search').addEventListener('click',async function(){
-      resultsEl.innerHTML=''; statusEl.textContent='';
-      const school=document.getElementById('school').value.trim().toLowerCase();
-      const nameInput=document.getElementById('name').value.trim();
-      if(!validateName(nameInput)){statusEl.innerHTML='<span style="color:#b00">姓名長度不符：請輸入 2~9 字</span>'; return;}
-      const anonName=anonymizeName(nameInput);
-      statusEl.textContent='載入資料...';
-      const data=await loadAll(); const loaded=data.loaded; const failed=data.failed;
-      statusEl.textContent=failed.length>0?`完成載入（部分檔案找不到：${failed.length}）`:`完成載入（共 ${loaded.length} 個檔案）`;
-
-      const matches=[];
-      for(const entry of loaded){
-        const date=entry.date;
-        const arr=Array.isArray(entry.data)?entry.data:[];
-        for(const row of arr){
-          const rowName=row.name||row['姓名']||'';
-          const rowSchool=(row.school||row['學校']||row.unit||row['單位']||'').toLowerCase();
-          if(rowName===anonName && (school===''||rowSchool.indexOf(school)!==-1)){
-            matches.push({...row,date:date,displayName=rowName});
-          }
-        }
-      }
-
-      matches.sort((a,b)=>{
-        const da=new Date(a.date).getTime(), db=new Date(b.date).getTime();
-        if(db!==da) return db-da;
-        const ra=Number(a.rank||a['排名']||Infinity), rb=Number(b.rank||b['排名']||Infinity);
-        return ra-rb;
-      });
-
-      render(matches);
-    });
-  </script>
+  render(matches);
+});
+</script>
 </body>
 </html>
