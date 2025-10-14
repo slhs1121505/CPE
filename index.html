@@ -9,14 +9,22 @@
   .container{max-width:980px;width:100%}
   .card{background:#fff;border-radius:12px;padding:28px;box-shadow:0 12px 36px rgba(0,0,0,0.05)}
   h1{margin:0 0 18px 0}
-  .form{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:16px;align-items:flex-end}
+  /* form layout: keep items vertically centered and allow the button to push to the far right */
+  .form{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
   .field{display:flex;flex-direction:column}
   label{font-size:12px;color:#666;margin-bottom:6px}
-  input[type=text]{padding:8px;border:1px solid #bbb;border-radius:6px;min-width:150px}
-  .btn{padding:10px 14px;border-radius:10px;border:1px solid #bbb;background:#fff;cursor:pointer;font-weight:700;align-self:flex-end}
+  /* make inputs a fixed height and ensure box-sizing so padding doesn't change total height */
+  input[type=text]{padding:8px;border:1px solid #bbb;border-radius:6px;min-width:150px;height:40px;box-sizing:border-box}
+  /* button: remove align-self, give same height as inputs, center content, and push to right with margin-left:auto */
+  .btn{height:40px;padding:0 14px;border-radius:10px;border:1px solid #bbb;background:#fff;cursor:pointer;font-weight:700;display:inline-flex;align-items:center;margin-left:auto}
   .results table{width:100%;border-collapse:collapse;font-size:14px;margin-top:16px}
   .results th, .results td{padding:10px 8px;text-align:left;border-bottom:1px solid #ccc}
   .empty{text-align:center;color:#666;padding:28px;background:#f5f5f5;border-radius:10px}
+  /* ensure on very small screens the button doesn't overlap the fields */
+  @media (max-width:520px){
+    .btn{margin-left:0;width:100%;justify-content:center}
+    .form{align-items:flex-start}
+  }
 </style>
 </head>
 <body>
