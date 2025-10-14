@@ -5,7 +5,7 @@ from pathlib import Path
 import requests
 from bs4 import BeautifulSoup
 
-OUT_DIR = Path(r"路徑") #自己改
+OUT_DIR = Path(r"路徑")  # 自己改
 DATES = [
     "2013-10-01","2013-12-17","2014-03-25","2014-05-27","2014-09-23","2014-12-23",
     "2015-03-24","2015-05-26","2015-10-06","2015-12-22","2016-03-22","2016-05-24",
@@ -36,26 +36,65 @@ def parse_scoreboard(html):
     soup = BeautifulSoup(html, "html.parser")
     table = soup.find("table", {"id": "scoreboard"}) or soup.find("table")
     if not table:
-        return None
+        return None, 0
+
     rows = table.find_all("tr")
     items = []
+    summary = None
+
     for tr in rows:
         tds = tr.find_all("td")
         if len(tds) < 4:
             continue
-        rank = tds[0].get_text(strip=True) if len(tds) > 0 else ""
-        school = tds[1].get_text(strip=True) if len(tds) > 1 else ""
-        name = tds[2].get_text(strip=True) if len(tds) > 2 else ""
-        solved = tds[3].get_text(strip=True) if len(tds) > 3 else ""
+
+        rank = tds[0].get_text(strip=True)
+        school = tds[1].get_text(strip=True)
+        name = tds[2].get_text(strip=True)
+        solved = tds[3].get_text(strip=True)
         minutes = tds[4].get_text(strip=True) if len(tds) > 4 else ""
+
+        if name.lower() == "summary":
+            summary = {
+                "排名": rank,
+                "學校": school,
+                "姓名": name,
+                "題數": solved,
+                "分鐘": minutes
+            }
+            continue
+
         items.append({
             "排名": rank,
             "學校": school,
             "姓名": name,
-            "題數": solved,
-            "分鐘": minutes
+            "題數": int(solved) if solved.isdigit() else 0,
+            "分鐘": int(minutes) if minutes.isdigit() else 0
         })
-    return items
+
+    items.sort(key=lambda x: (-x["題數"], x["分鐘"]))
+
+    current_rank = 0
+    last_score = None
+    for i, item in enumerate(items):
+        score = (item["題數"], item["分鐘"])
+        if score != last_score:
+            current_rank = i + 1
+            last_score = score
+        item["排名"] = str(current_rank)
+
+    total_count = len(items)
+
+    for item in items:
+        try:
+            rank_number = int(item["排名"])
+            item["趴數"] = f"{round(rank_number / total_count * 100, 1)}%"
+        except:
+            item["趴數"] = ""
+
+    if summary:
+        items.append(summary)
+
+    return items, total_count
 
 def save_json(date, data, out_dir: Path):
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -85,18 +124,20 @@ def main():
             print(f"HTTP {resp.status_code}，跳過")
             continue
 
-        parsed = parse_scoreboard(resp.text)
+        parsed, total_count = parse_scoreboard(resp.text)
         if parsed is None or len(parsed) == 0:
             print("為空")
             parsed = []
 
+        print(f"總人數: {total_count}")
+
         try:
             save_json(date, parsed, OUT_DIR)
-            print(f"儲存:{out_file}")
+            print(f"儲存: {out_file}")
         except Exception as e:
-            print(f"儲存失敗:{e}")
+            print(f"儲存失敗: {e}")
 
-        time.sleep(1.2) #怕太快會被告
+        time.sleep(1.2)
 
     print("完成", OUT_DIR)
 
