@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>CPE 查榜</title>
+  <title>CPE 查榜小工具</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
     :root{
@@ -15,16 +15,14 @@
       --line:#bbbbbb;
     }
     *{box-sizing:border-box}
-    html,body{height:100%}
-    body{font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,'Noto Sans TC',sans-serif;margin:0;background:var(--bg);color:var(--fg);display:flex;align-items:center;justify-content:center;padding:48px}
+    html,body{height:100%;margin:0;padding:0;font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,'Noto Sans TC',sans-serif;background:var(--bg);color:var(--fg);}
+    body{display:flex;justify-content:center;align-items:flex-start;padding:24px}
 
-    .container{width:100%;max-width:980px}
+    .container{width:100%;max-width:980px;max-height:95vh;overflow:auto}
     .card{background:linear-gradient(180deg,var(--card),var(--panel));border-radius:12px;padding:28px;box-shadow:0 12px 36px rgba(0,0,0,0.05)}
 
-    .header{display:flex;align-items:center;gap:14px;margin-bottom:18px}
-    .title{display:flex;flex-direction:column}
+    .header{display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap}
     .title h1{margin:0;font-size:28px;font-weight:700;color:#000000}
-
     .count{margin-left:auto;color:var(--muted)}
 
     .form{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;margin-top:16px}
@@ -34,8 +32,6 @@
     input[type=text]:focus{outline:none;border-color:#bbb;box-shadow:0 0 6px rgba(0,0,0,0.05)}
 
     .controls-right{margin-left:auto;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
-    .row-actions{display:flex;gap:8px;align-items:center}
-    select{padding:8px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--fg)}
     .btn{padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:#fff;cursor:pointer;font-weight:700;transition:0.2s}
     .btn:hover{background:#f2f2f2}
     .btn.primary{background:#fff;color:var(--fg);border:1px solid var(--line)}
@@ -46,7 +42,6 @@
     table{width:100%;border-collapse:collapse;font-size:14px}
     thead th{padding:12px 8px;text-align:left;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line)}
     tbody td{padding:10px 8px;border-bottom:1px dashed var(--line)}
-
     .empty{padding:28px;border-radius:10px;background:transparent;color:var(--muted);text-align:center}
 
     footer{margin-top:18px;display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:13px}
@@ -60,7 +55,7 @@
     <div class="card">
       <div class="header">
         <div class="title">
-          <h1>CPE 查榜</h1>
+          <h1>CPE 查榜小工具</h1>
         </div>
         <div class="count"><span id="dateCount"></span> 個已收錄日期</div>
       </div>
@@ -70,17 +65,12 @@
           <label for="school">學校 / 單位（選填）</label>
           <input id="school" type="text" placeholder="例如：臺大資工">
         </div>
-
         <div class="field">
           <label for="name">姓名（必填，2~9 字）</label>
           <input id="name" type="text" placeholder="例如：王小明">
         </div>
-
         <div class="controls-right">
-          <div class="row-actions">
-            <select id="maxPerPage"><option value="0">全部</option><option value="50">50</option><option value="100">100</option></select>
-            <button id="search" class="btn primary">查詢</button>
-          </div>
+          <button id="search" class="btn primary">查詢</button>
         </div>
       </div>
 
@@ -107,7 +97,6 @@
     ];
 
     document.getElementById('dateCount').textContent = DATES.length;
-
     const statusEl = document.getElementById('status');
     const resultsEl = document.getElementById('results');
 
@@ -128,26 +117,25 @@
 
     function validateName(n){
       const l = n.trim().length;
-      return l > 1 && l < 10;
+      return l>1 && l<10;
     }
 
     async function loadAll(){
       const promises = DATES.map(d => 
         fetch('https://raw.githubusercontent.com/slhs1121505/CPE/main/data/' + d + '.json')
-          .then(r => r.ok ? r.json().then(data => ({date: d, data: data})) : Promise.reject(d))
+          .then(r => r.ok ? r.json().then(data => ({date:d,data:data})) : Promise.reject(d))
       );
       const settled = await Promise.allSettled(promises);
-      const loaded = settled.filter(s => s.status === 'fulfilled').map(s => s.value);
-      const failed = settled.filter(s => s.status === 'rejected').map(s => s.reason);
+      const loaded = settled.filter(s=>s.status==='fulfilled').map(s=>s.value);
+      const failed = settled.filter(s=>s.status==='rejected').map(s=>s.reason);
       return {loaded, failed};
     }
 
-    function render(matches, max){
-      if(matches.length === 0){ resultsEl.innerHTML = '<div class="empty">查無結果</div>'; return; }
-      const rows = matches.slice(0, max>0?max:matches.length);
-      let html = '<table><thead><tr><th>日期</th><th>排名</th><th>學校/單位</th><th>姓名</th><th>題數</th><th>分鐘</th></tr></thead><tbody>';
-      for(const r of rows){
-        html += `<tr>
+    function render(matches){
+      if(matches.length===0){resultsEl.innerHTML='<div class="empty">查無結果</div>'; return;}
+      let html='<table><thead><tr><th>日期</th><th>排名</th><th>學校/單位</th><th>姓名</th><th>題數</th><th>分鐘</th></tr></thead><tbody>';
+      for(const r of matches){
+        html+=`<tr>
           <td>${r.date||''}</td>
           <td>${r.rank||r['排名']||''}</td>
           <td>${r.school||r['學校']||''}</td>
@@ -156,55 +144,42 @@
           <td>${r.minutes||r['分鐘']||''}</td>
         </tr>`;
       }
-      html += '</tbody></table>';
-      html += `<div style="margin-top:10px;color:var(--muted);font-size:13px">
-        顯示 ${rows.length} / ${matches.length} 筆結果（日期由近到遠）
-      </div>`;
-      resultsEl.innerHTML = html;
+      html+='</tbody></table>';
+      html+=`<div style="margin-top:10px;color:var(--muted);font-size:13px">顯示 ${matches.length} 筆結果（日期由近到遠）</div>`;
+      resultsEl.innerHTML=html;
     }
 
-    document.getElementById('search').addEventListener('click', async function(){
-      resultsEl.innerHTML = '';
-      statusEl.textContent = '';
-      const school = document.getElementById('school').value.trim().toLowerCase();
-      const nameInput = document.getElementById('name').value.trim();
-      const max = Number(document.getElementById('maxPerPage').value);
+    document.getElementById('search').addEventListener('click',async function(){
+      resultsEl.innerHTML=''; statusEl.textContent='';
+      const school=document.getElementById('school').value.trim().toLowerCase();
+      const nameInput=document.getElementById('name').value.trim();
+      if(!validateName(nameInput)){statusEl.innerHTML='<span style="color:#b00">姓名長度不符：請輸入 2~9 字</span>'; return;}
+      const anonName=anonymizeName(nameInput);
+      statusEl.textContent='載入資料...';
+      const data=await loadAll(); const loaded=data.loaded; const failed=data.failed;
+      statusEl.textContent=failed.length>0?`完成載入（部分檔案找不到：${failed.length}）`:`完成載入（共 ${loaded.length} 個檔案）`;
 
-      if(!validateName(nameInput)){
-        statusEl.innerHTML = '<span style="color:#b00">姓名長度不符：請輸入 2~9 字</span>';
-        return;
-      }
-
-      const anonName = anonymizeName(nameInput);
-
-      statusEl.textContent = '載入資料...';
-      const data = await loadAll();
-      const loaded = data.loaded; const failed = data.failed;
-      statusEl.textContent = failed.length>0 
-        ? `完成載入（部分檔案找不到：${failed.length}）`
-        : `完成載入（共 ${loaded.length} 個檔案）`;
-
-      const matches = [];
+      const matches=[];
       for(const entry of loaded){
-        const date = entry.date;
-        const arr = Array.isArray(entry.data)?entry.data:[];
+        const date=entry.date;
+        const arr=Array.isArray(entry.data)?entry.data:[];
         for(const row of arr){
-          const rowName = row.name||row['姓名']||'';
-          const rowSchool = (row.school||row['學校']||row.unit||row['單位']||'').toLowerCase();
-          if(rowName === anonName && (school==='' || rowSchool.indexOf(school)!==-1)){
-            matches.push({...row, date: date, displayName: rowName});
+          const rowName=row.name||row['姓名']||'';
+          const rowSchool=(row.school||row['學校']||row.unit||row['單位']||'').toLowerCase();
+          if(rowName===anonName && (school===''||rowSchool.indexOf(school)!==-1)){
+            matches.push({...row,date:date,displayName:rowName});
           }
         }
       }
 
       matches.sort((a,b)=>{
-        const da = new Date(a.date).getTime(), db = new Date(b.date).getTime();
+        const da=new Date(a.date).getTime(), db=new Date(b.date).getTime();
         if(db!==da) return db-da;
-        const ra = Number(a.rank||a['排名']||Infinity), rb = Number(b.rank||b['排名']||Infinity);
+        const ra=Number(a.rank||a['排名']||Infinity), rb=Number(b.rank||b['排名']||Infinity);
         return ra-rb;
       });
 
-      render(matches, max);
+      render(matches);
     });
   </script>
 </body>
