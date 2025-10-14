@@ -7,23 +7,24 @@
 <style>
   body{font-family:Inter,sans-serif;background:#f9f9f9;margin:0;padding:24px;display:flex;justify-content:center}
   .container{max-width:980px;width:100%}
-  .card{background:#fff;border-radius:12px;padding:28px;box-shadow:0 12px 36px rgba(0,0,0,0.05)}
+  .card{background:#fff;border-radius:12px;padding:28px;box-shadow:0 12px 36px rgba(0,0,0,0.05);position:relative;padding-bottom:64px}
   h1{margin:0 0 18px 0}
-  /* form layout: keep items vertically centered and allow the button to push to the far right */
   .form{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
   .field{display:flex;flex-direction:column}
   label{font-size:12px;color:#666;margin-bottom:6px}
-  /* make inputs a fixed height and ensure box-sizing so padding doesn't change total height */
   input[type=text]{padding:8px;border:1px solid #bbb;border-radius:6px;min-width:150px;height:40px;box-sizing:border-box}
-  /* button: remove align-self, give same height as inputs, center content, and push to right with margin-left:auto */
   .btn{height:40px;padding:0 14px;border-radius:10px;border:1px solid #bbb;background:#fff;cursor:pointer;font-weight:700;display:inline-flex;align-items:center;margin-left:auto}
   .results table{width:100%;border-collapse:collapse;font-size:14px;margin-top:16px}
   .results th, .results td{padding:10px 8px;text-align:left;border-bottom:1px solid #ccc}
   .empty{text-align:center;color:#666;padding:28px;background:#f5f5f5;border-radius:10px}
-  /* ensure on very small screens the button doesn't overlap the fields */
+  .card .credit{position:absolute;right:16px;bottom:12px;font-size:13px;color:#666}
+  .card .credit a{color:inherit;text-decoration:none}
+  .card .credit a strong{font-weight:800;color:#222}
   @media (max-width:520px){
     .btn{margin-left:0;width:100%;justify-content:center}
     .form{align-items:flex-start}
+    .card{padding-bottom:84px}
+    .card .credit{right:12px;left:12px;text-align:right}
   }
 </style>
 </head>
@@ -44,6 +45,10 @@
     </div>
     <div id="status">請輸入姓名並按查詢</div>
     <div class="results" id="results"><div class="empty">尚無查詢結果</div></div>
+
+    <div class="credit">
+      <a href="https://github.com/slhs1121505/" target="_blank" rel="noopener noreferrer"><strong>張子夫</strong> 製作</a>
+    </div>
   </div>
 </div>
 
