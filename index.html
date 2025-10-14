@@ -38,7 +38,7 @@
 
     .status{margin-top:12px;color:var(--muted);font-size:13px}
 
-    .results{margin-top:18px;overflow-x:auto;}
+    .results{margin-top:18px}
     table{width:100%;border-collapse:collapse;font-size:14px}
     thead th{padding:12px 8px;text-align:left;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line)}
     tbody td{padding:10px 8px;border-bottom:1px dashed var(--line)}
@@ -134,14 +134,7 @@
     function render(matches){
       if(matches.length===0){resultsEl.innerHTML='<div class="empty">查無結果</div>'; return;}
       let html='<table><thead><tr><th>日期</th><th>排名</th><th>學校/單位</th><th>姓名</th><th>題數</th><th>分鐘</th><th>排名比例</th></tr></thead><tbody>';
-
       for(const r of matches){
-        // 計算排名比例
-        let percent = "";
-        if(r.rank && r.totalCount){
-          percent = (r.rank / r.totalCount * 100).toFixed(1) + "%"; // 四捨五入一位小數
-        }
-
         html+=`<tr>
           <td>${r.date||''}</td>
           <td>${r.rank||r['排名']||''}</td>
@@ -149,10 +142,9 @@
           <td>${r.displayName||r.name||r['姓名']||''}</td>
           <td>${r.solved||r['題數']||''}</td>
           <td>${r.minutes||r['分鐘']||''}</td>
-          <td>${percent}</td>
+          <td>${r['趴數']||''}</td>
         </tr>`;
       }
-
       html+='</tbody></table>';
       html+=`<div style="margin-top:10px;color:var(--muted);font-size:13px">顯示 ${matches.length} 筆結果（日期由近到遠）</div>`;
       resultsEl.innerHTML=html;
@@ -172,13 +164,11 @@
       for(const entry of loaded){
         const date=entry.date;
         const arr=Array.isArray(entry.data)?entry.data:[];
-        const totalCount = arr.filter(r => (r.name||r['姓名']||'').toLowerCase() !== 'summary').length;
-
         for(const row of arr){
           const rowName=row.name||row['姓名']||'';
           const rowSchool=(row.school||row['學校']||row.unit||row['單位']||'').toLowerCase();
           if(rowName===anonName && (school===''||rowSchool.indexOf(school)!==-1)){
-            matches.push({...row, date:date, displayName:rowName, totalCount});
+            matches.push({...row,date:date,displayName=rowName});
           }
         }
       }
