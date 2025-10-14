@@ -1,2 +1,2 @@
-# CPE-
-CPE別告我~
+# CPE查榜
+爬蟲 + Javascript啥的。
