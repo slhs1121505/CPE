@@ -34,16 +34,16 @@
     <h2>CPE 查榜小工具</h2>
     <div class="form">
       <div class="field">
-        <label for="school">學校 / 單位（選填）</label>
+        <label for="school">學校 / 單位</label>
         <input id="school" type="text" placeholder="例如：臺大資工">
       </div>
       <div class="field">
-        <label for="name">姓名（必填，2~9 字）</label>
+        <label for="name">姓名</label>
         <input id="name" type="text" placeholder="例如：王小明">
       </div>
       <button id="search" class="btn">查詢</button>
     </div>
-    <div id="status">請輸入姓名並按查詢</div>
+    <div id="status">請輸入姓名或學校並按查詢</div>
     <div class="results" id="results"><div class="empty">尚無查詢結果</div></div>
 
     <div class="footer-credit">
@@ -79,7 +79,14 @@ function anonymizeName(nameRaw){
   return nameRaw;
 }
 
-function validateName(n){ const l=n.trim().length; return l>1 && l<10; }
+// validate: require at least one of name or school; if name provided must be 2~9 chars
+function validateInputs(name, school){
+  const ln = name.trim().length;
+  const ls = school.trim().length;
+  if(ln === 0 && ls === 0) return false;
+  if(ln > 0) return ln > 1 && ln < 10;
+  return true;
+}
 
 async function loadAll(){
   const promises = DATES.map(d=>fetch(`https://raw.githubusercontent.com/slhs1121505/CPE/main/data/${d}.json`).then(r=>r.ok?r.json().then(data=>({date:d,data:data})):Promise.reject(d)));
@@ -112,8 +119,13 @@ document.getElementById('search').addEventListener('click',async function(){
   resultsEl.innerHTML=''; statusEl.textContent='';
   const school=document.getElementById('school').value.trim().toLowerCase();
   const nameInput=document.getElementById('name').value.trim();
-  if(!validateName(nameInput)){statusEl.innerHTML='<span style="color:#b00">姓名長度不符：請輸入 2~9 字</span>'; return;}
-  const anonName=anonymizeName(nameInput);
+  if(!validateInputs(nameInput, school)){
+    statusEl.innerHTML='<span style="color:#b00">請輸入姓名（2~9 字）或學校/單位</span>'; 
+    return;
+  }
+  const nameProvided = nameInput.length > 0;
+  const schoolProvided = school.length > 0;
+  const anonName = nameProvided ? anonymizeName(nameInput) : '';
   statusEl.textContent='載入資料...';
   const data=await loadAll(); const loaded=data.loaded; const failed=data.failed;
   statusEl.textContent=failed.length>0?`完成載入（部分檔案找不到：${failed.length}）`:`完成載入（共 ${loaded.length} 個檔案）`;
@@ -123,9 +135,11 @@ document.getElementById('search').addEventListener('click',async function(){
     const date=entry.date;
     const arr=Array.isArray(entry.data)?entry.data:[];
     for(const row of arr){
-      const rowName=row.name||row['姓名']||'';
+      const rowName=(row.name||row['姓名']||'');
       const rowSchool=(row.school||row['學校']||row.unit||row['單位']||'').toLowerCase();
-      if(rowName===anonName && (school===''||rowSchool.indexOf(school)!==-1)){
+      const matchName = !nameProvided || rowName === anonName;
+      const matchSchool = !schoolProvided || rowSchool.indexOf(school) !== -1;
+      if(matchName && matchSchool){
         matches.push({
           ...row,
           date: date,
